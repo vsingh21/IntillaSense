@@ -108,9 +108,6 @@ endpoints = {
 
 
 app = Flask(__name__)
-@app.route('/time')
-def get_current_time():
-    return {'time': time.time()}
 
 
 class TillageRecommendationAlternative(BaseModel):
@@ -136,12 +133,23 @@ def chatbot_reponse():
 
     farmContext = {}
 
+    txt_file_name = ""
+
     if farmNumber == ILLINOIS_FARM_NUMBER:
         farmContext['farm_size(acres)'] = ILLINOIS_FARM_SIZE
         farmContext['available_equipment'] = ILLINOIS_EQUIPMENT
+        txt_file_name = "src/ILLINOIS_WEATHER_SOIL.txt"
     elif farmNumber == NORTH_DAKOTA_FARM_NUMBER:
         farmContext['farm_size(acres)'] = NORTH_DAKOTA_FARM_SIZE
         farmContext['available_equipment'] = NORTH_DAKOTA_EQUIPMENT
+        txt_file_name = "src/NORTH_DAKOTA_WEATHER_SOIL.txt"
+
+    content = ""
+    with open(txt_file_name, "r") as file:
+        content = file.read()
+    print(content)
+    
+    farmContext["historical_weather_and_soil_data"] = content
 
     chatbot_system_content = "You are an AI chatbot that analyzes farm and environmental conditions to suggest optimal tillage dates, methods, and cost comparisons to a farmer. Create clear, data-driven insights that empower the farmer to make smart, sustainable decisions! Please keep in mind the difference between cost/acre and total cost. You may only pick from the options available to the farmer."
     

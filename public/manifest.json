@@ -1,6 +1,6 @@
 {
-  "short_name": "IntillaSense",
-  "name": "IntillaSense - Smart Tillage Recommendations",
+  "short_name": "React App",
+  "name": "Create React App Sample",
   "icons": [
     {
       "src": "favicon.ico",

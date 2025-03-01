@@ -1,7 +1,6 @@
 import time
 from flask import Flask, request
-import requests
-import json
+from openai import AzureOpenAI
 from dotenv import load_dotenv
 import os
 
@@ -94,6 +93,18 @@ ILLINOIS_EQUIPMENT = [
     }
 ]
 
+client = AzureOpenAI(
+    api_key=os.getenv("API_KEY"),
+    api_version="2024-10-21",
+    azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT')
+)
+
+endpoints = {
+    "gpt_40": "gpt-4o-2",
+    "gpt_o1_mini": "o1-mini"
+}
+
+
 app = Flask(__name__)
 
 @app.route('/time')
@@ -107,17 +118,15 @@ def chatbot_reponse():
     image = request.args.get('image', default='NO_IMAGE', type=str)
     
 
-    headers = {
-    "Content-Type": "application/json",
-    "api-key": os.getenv("API_KEY")
-    }
-
     data = {
         "messages": [
-            {"role": "system", "content": "You are an AI assistant."},
+            {"role": "system", "content": "You are an AI chatbot that analyzes farm and environmental conditions to suggest optimal tillage dates, methods, and cost comparisons. Create clear, data-driven insights that empower farmers to make smart, sustainable decisions!"},
             {"role": "user", "content": "What are the benefits of no-till farming?"}
         ]
     }
 
-    response = requests.post(os.getenv('GPT_URL_4o'), headers=headers, data=json.dumps(data))
-    return response.json()
+    response = client.chat.completions.create(
+        model=endpoints["gpt_40"],
+        messages=data["messages"]
+    )
+    return response.choices[0].message.content

@@ -128,20 +128,26 @@ function App() {
 
       // Make the API request to /user_chatbot_request
       const text = formData.get('text') || '';
-      const queryParams = new URLSearchParams({
-        farmNum: selectedFarm,
-        text: text
-      });
       
       try {
-        const response = await fetch(`/user_chatbot_request?${queryParams}`);
+        const response = await fetch('/user_chatbot_request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            farmNum: selectedFarm,
+            text: text
+          })
+        });
+        
         const data = await response.json();
         console.log('Chatbot Response:', data);
 
-        const mockRecommendation = {
+        const recommendation = {
           responseToUser: data.response_to_user_question,
           primaryMethod: data.primary_option.equipment,
-          estimatedCost: data.primary_option.estimated_total_cost,
+          estimatedCost: data.primary_option.total_cost_of_this_option,
           benefits: data.benefits,
           factors: [
             `Soil Type: ${data.field_specific_factors.soil_type}`,
@@ -150,17 +156,22 @@ function App() {
           alternativeOptions: [
             {
               method: data.alternative_option_1.equipment,
-              cost: data.alternative_option_1.estimated_total_cost
+              cost: data.alternative_option_1.total_cost_of_this_option
             },
             {
               method: data.alternative_option_2.equipment,
-              cost: data.alternative_option_2.estimated_total_cost
+              cost: data.alternative_option_2.total_cost_of_this_option
             }
           ],
-          explanation: data.summary_info_blurb
+          explanation: data.summary_info_blurb,
+          tillageDates: {
+            fall: data.tillage_dates.optimal_fall_tillage_date,
+            spring: data.tillage_dates.optimal_spring_tillage_date,
+            explanation: data.tillage_dates.reason_for_tillage_dates
+          }
         };
 
-        setRecommendation(mockRecommendation);
+        setRecommendation(recommendation);
         setLoading(false);
       } catch (error) {
         console.error('API Request Error:', error);

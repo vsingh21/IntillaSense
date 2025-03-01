@@ -54,7 +54,13 @@ const InputSection = ({ onSubmit, loading }) => {
 
   const onDrop = useCallback(acceptedFiles => {
     if (acceptedFiles.length > 0) {
-      setImageFile(acceptedFiles[0]);
+      const file = acceptedFiles[0];
+      // Check if file size is less than 5MB (5 * 1024 * 1024 bytes)
+      if (file.size > 5 * 1024 * 1024) {
+        setValidationError('File size must be less than 5MB');
+        return;
+      }
+      setImageFile(file);
       setValidationError('');
     }
   }, []);
@@ -65,7 +71,13 @@ const InputSection = ({ onSubmit, loading }) => {
       'image/*': ['.jpeg', '.jpg', '.png']
     },
     maxFiles: 1,
-    noClick: true
+    noClick: true,
+    maxSize: 5 * 1024 * 1024, // 5MB in bytes
+    onDropRejected: (rejectedFiles) => {
+      if (rejectedFiles[0]?.errors[0]?.code === 'file-too-large') {
+        setValidationError('File size must be less than 5MB');
+      }
+    }
   });
 
   const handleSubmit = (e) => {
@@ -120,17 +132,25 @@ const InputSection = ({ onSubmit, loading }) => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             zIndex: 9999,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 2,
             pointerEvents: 'none'
           }}
         >
-          <Typography variant="h5" sx={{ color: '#fff', textAlign: 'center' }}>
-            Drop your field image here
-          </Typography>
+          <ImageIcon sx={{ fontSize: 64, color: '#fff' }} />
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h5" sx={{ color: '#fff', mb: 1 }}>
+              Drop your field image here
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              Maximum file size: 5MB
+            </Typography>
+          </Box>
         </Box>
       )}
       

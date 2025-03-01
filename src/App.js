@@ -121,8 +121,46 @@ function App() {
       // Add the selected farm to the form data
       formData.append('farmNum', selectedFarm);
 
-      // For now, we'll simulate an API call with mock data
-      // This will be replaced with actual API call later
+      // Make the API request to /user_chatbot_request
+      const text = formData.get('text') || '';
+      const imageFile = formData.get('image');
+      
+      // Prepare request body
+      const requestBody = {
+        farmNum: selectedFarm,
+        text: text
+      };
+
+      // If there's an image, convert it to base64 and add to body
+      if (imageFile) {
+        try {
+          const base64Image = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageFile);
+          });
+          requestBody.image = base64Image;
+        } catch (error) {
+          console.error('Error converting image to base64:', error);
+        }
+      }
+      
+      try {
+        const response = await fetch('/user_chatbot_request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody)
+        });
+        const data = await response.json();
+        console.log('Chatbot Response:', data);
+      } catch (error) {
+        console.error('API Request Error:', error);
+      }
+
+      // Keep the existing mock recommendation logic
       setTimeout(() => {
         const mockRecommendation = {
           primaryMethod: "Conservation Tillage",

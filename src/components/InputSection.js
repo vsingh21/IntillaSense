@@ -18,13 +18,11 @@ import {
   Search,
   ArrowUpward
 } from '@mui/icons-material';
-import { useDropzone } from 'react-dropzone';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
-const InputSection = ({ onSubmit, loading }) => {
+const InputSection = ({ onSubmit, loading, imageFile, setImageFile }) => {
   const theme = useTheme();
   const [textInput, setTextInput] = useState('');
-  const [imageFile, setImageFile] = useState(null);
   const [validationError, setValidationError] = useState('');
   const [browserSupportsSpeech, setBrowserSupportsSpeech] = useState(true);
 
@@ -51,34 +49,6 @@ const InputSection = ({ onSubmit, loading }) => {
       resetTranscript();
     }
   }, [transcript, listening, resetTranscript]);
-
-  const onDrop = useCallback(acceptedFiles => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      // Check if file size is less than 5MB (5 * 1024 * 1024 bytes)
-      if (file.size > 5 * 1024 * 1024) {
-        setValidationError('File size must be less than 5MB');
-        return;
-      }
-      setImageFile(file);
-      setValidationError('');
-    }
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png']
-    },
-    maxFiles: 1,
-    noClick: true,
-    maxSize: 5 * 1024 * 1024, // 5MB in bytes
-    onDropRejected: (rejectedFiles) => {
-      if (rejectedFiles[0]?.errors[0]?.code === 'file-too-large') {
-        setValidationError('File size must be less than 5MB');
-      }
-    }
-  });
 
   const handleSubmit = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -118,42 +88,11 @@ const InputSection = ({ onSubmit, loading }) => {
 
   return (
     <Box 
-      {...getRootProps()}
       sx={{ 
         width: '100%',
         position: 'relative',
       }}
     >
-      {isDragActive && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            zIndex: 9999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-            pointerEvents: 'none'
-          }}
-        >
-          <ImageIcon sx={{ fontSize: 64, color: '#fff' }} />
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h5" sx={{ color: '#fff', mb: 1 }}>
-              Drop your field image here
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              Maximum file size: 5MB
-            </Typography>
-          </Box>
-        </Box>
-      )}
-      
       <Box sx={{ position: 'relative' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <TextField
@@ -161,6 +100,7 @@ const InputSection = ({ onSubmit, loading }) => {
             multiline
             minRows={1}
             maxRows={15}
+            autoFocus
             placeholder="Ask anything"
             value={textInput}
             onChange={(e) => {
@@ -214,13 +154,26 @@ const InputSection = ({ onSubmit, loading }) => {
             justifyContent: 'space-between'
           }}>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      setValidationError('File size must be less than 5MB');
+                      return;
+                    }
+                    setImageFile(file);
+                    setValidationError('');
+                  }
+                }}
+                id="file-input"
+              />
               <IconButton
                 size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const input = document.querySelector('input[type="file"]');
-                  if (input) input.click();
-                }}
+                onClick={() => document.getElementById('file-input').click()}
                 sx={{
                   width: 32,
                   height: 32,
@@ -318,7 +271,6 @@ const InputSection = ({ onSubmit, loading }) => {
             </IconButton>
           </Box>
         </Box>
-        <input {...getInputProps()} />
       </Box>
 
       <Collapse in={!!validationError}>

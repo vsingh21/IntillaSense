@@ -21,6 +21,14 @@ const RecommendationDisplay = ({ recommendation }) => {
 
   return (
     <Box>
+      {recommendation.responseToUser && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="body1" color="text.primary" sx={{ fontStyle: 'italic' }}>
+            {recommendation.responseToUser}
+          </Typography>
+        </Box>
+      )}
+
       <Typography variant="h5" gutterBottom color="text.primary">
         Tillage Recommendations
       </Typography>

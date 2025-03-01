@@ -134,11 +134,17 @@ class TillageRecommendation(BaseModel):
     summary_info_blurb: str
     response_to_user_question: str
 
-@app.route('/user_chatbot_request')
-def chatbot_reponse():
-    farmNumber = request.args.get('farmNum', type = int)
-    chatbot_text = request.args.get('text', type = str)
-    image = request.args.get('image', default='NO_IMAGE', type=str)
+@app.route('/user_chatbot_request', methods=['GET', 'POST'])
+def chatbot_response():
+    if request.method == 'POST':
+        data = request.get_json()
+        farmNumber = data.get('farmNum', None)
+        chatbot_text = data.get('text', '')
+        image = data.get('image', 'NO_IMAGE')
+    else:  # GET request
+        farmNumber = request.args.get('farmNum', type=int)
+        chatbot_text = request.args.get('text', type=str)
+        image = request.args.get('image', default='NO_IMAGE', type=str)
     
     ILLINOIS_FARM_NUMBER = 1
     NORTH_DAKOTA_FARM_NUMBER = 2

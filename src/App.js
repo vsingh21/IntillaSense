@@ -9,17 +9,17 @@ import {
   Alert, 
   IconButton, 
   Typography,
-  ButtonGroup,
   Button,
-  Fade
+  Fade,
+  ToggleButtonGroup,
+  ToggleButton
 } from '@mui/material';
 import { 
   Brightness4, 
   Brightness7, 
-  Search, 
-  Psychology, 
-  Add,
-  KeyboardArrowUp 
+  Search,
+  KeyboardArrowUp,
+  Agriculture
 } from '@mui/icons-material';
 import InputSection from './components/InputSection';
 import RecommendationDisplay from './components/RecommendationDisplay';
@@ -29,8 +29,9 @@ function App() {
   const [recommendation, setRecommendation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [mode, setMode] = useState('light');
+  const [mode, setMode] = useState(() => localStorage.getItem('theme') || 'light');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [selectedFarm, setSelectedFarm] = useState(1); // Default to Farm 1
 
   // Handle scroll to show/hide scroll to top button
   React.useEffect(() => {
@@ -44,6 +45,18 @@ function App() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleFarmChange = (event, newFarm) => {
+    if (newFarm !== null) {
+      setSelectedFarm(newFarm);
+    }
+  };
+
+  const toggleTheme = () => {
+    const newMode = mode === 'dark' ? 'light' : 'dark';
+    setMode(newMode);
+    localStorage.setItem('theme', newMode);
   };
 
   const theme = useMemo(
@@ -71,12 +84,15 @@ function App() {
                   backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
                   '& fieldset': {
                     borderColor: 'transparent',
+                    borderRadius: '100px',
                   },
                   '&:hover fieldset': {
                     borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '100px',
                   },
                   '&.Mui-focused fieldset': {
                     borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                    borderRadius: '100px',
                   },
                 },
               },
@@ -101,6 +117,9 @@ function App() {
     try {
       setLoading(true);
       setError(null);
+
+      // Add the selected farm to the form data
+      formData.append('farmNum', selectedFarm);
 
       // For now, we'll simulate an API call with mock data
       // This will be replaced with actual API call later
@@ -169,7 +188,7 @@ function App() {
             IntillaSense
           </Typography>
           <IconButton 
-            onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')} 
+            onClick={toggleTheme} 
             sx={{ 
               color: theme.palette.text.primary,
               backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
@@ -206,40 +225,54 @@ function App() {
             </Typography>
           </Box>
 
+          {/* Farm selection */}
+          <ToggleButtonGroup
+            value={selectedFarm}
+            exclusive
+            onChange={handleFarmChange}
+            aria-label="farm selection"
+            sx={{
+              mb: -2,
+              '& .MuiToggleButton-root': {
+                borderRadius: '100px',
+                px: 3,
+                py: 1,
+                mx: 1,
+                border: 'none',
+                backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                '&.Mui-selected': {
+                  backgroundColor: theme.palette.primary.main,
+                  color: '#fff',
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.dark,
+                  }
+                },
+                '&:hover': {
+                  backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                }
+              }
+            }}
+          >
+            <ToggleButton value={1}>
+              <Agriculture sx={{ mr: 1 }} />
+              Illinois Farm
+            </ToggleButton>
+            <ToggleButton value={2}>
+              <Agriculture sx={{ mr: 1 }} />
+              North Dakota Farm
+            </ToggleButton>
+          </ToggleButtonGroup>
+
           {/* Main input section with action buttons */}
-          <Box sx={{ width: '100%', maxWidth: 800, mx: 'auto' }}>
+          <Box sx={{ width: '100%', maxWidth: '1000px', mx: 'auto' }}>
             <Paper 
               elevation={0} 
               sx={{ 
-                p: 2,
+                p: 0,
                 backgroundColor: 'transparent'
               }}
             >
               <InputSection onSubmit={handleSubmission} loading={loading} />
-              
-              {/* Action buttons */}
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <ButtonGroup variant="text" size="large">
-                  <Button 
-                    startIcon={<Search />}
-                    sx={{ borderRadius: '100px', px: 3 }}
-                  >
-                    Search
-                  </Button>
-                  <Button 
-                    startIcon={<Psychology />}
-                    sx={{ borderRadius: '100px', px: 3 }}
-                  >
-                    Reason
-                  </Button>
-                  <Button 
-                    startIcon={<Add />}
-                    sx={{ borderRadius: '100px', px: 3 }}
-                  >
-                    Add Field
-                  </Button>
-                </ButtonGroup>
-              </Box>
             </Paper>
           </Box>
 
@@ -251,7 +284,7 @@ function App() {
                 sx={{ 
                   p: 4,
                   width: '100%',
-                  maxWidth: 800,
+                  maxWidth: '1000px',
                   mx: 'auto',
                   backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
                 }}

@@ -6,13 +6,17 @@ import {
   IconButton, 
   useTheme,
   Collapse,
-  Tooltip
+  Tooltip,
+  Alert,
+  Button
 } from '@mui/material';
 import { 
   MicNone, 
   MicOff, 
   Image as ImageIcon,
-  Add
+  Add,
+  Search,
+  ArrowUpward
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -22,7 +26,20 @@ const InputSection = ({ onSubmit, loading }) => {
   const [textInput, setTextInput] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [validationError, setValidationError] = useState('');
-  const { transcript, listening, resetTranscript } = useSpeechRecognition();
+  const [browserSupportsSpeech, setBrowserSupportsSpeech] = useState(true);
+
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (!browserSupportsSpeechRecognition) {
+      setBrowserSupportsSpeech(false);
+    }
+  }, [browserSupportsSpeechRecognition]);
 
   useEffect(() => {
     if (transcript && listening) {
@@ -69,13 +86,21 @@ const InputSection = ({ onSubmit, loading }) => {
   };
 
   const toggleListening = () => {
+    if (!browserSupportsSpeechRecognition) {
+      setValidationError('Your browser does not support speech recognition. Please try Chrome.');
+      return;
+    }
+
     if (listening) {
       console.log('Stopping voice recording');
       SpeechRecognition.stopListening();
     } else {
       console.log('Starting voice recording...');
       setValidationError('');
-      SpeechRecognition.startListening({ continuous: true });
+      SpeechRecognition.startListening({ 
+        continuous: true,
+        language: 'en-US'
+      });
     }
   };
 
@@ -110,102 +135,169 @@ const InputSection = ({ onSubmit, loading }) => {
       )}
       
       <Box sx={{ position: 'relative' }}>
-        <TextField
-          fullWidth
-          multiline
-          minRows={1}
-          maxRows={5}
-          placeholder="Describe your field conditions or ask for recommendations..."
-          value={textInput}
-          onChange={(e) => {
-            setTextInput(e.target.value);
-            setValidationError('');
-          }}
-          onKeyPress={handleSubmit}
-          disabled={loading}
-          sx={{
-            '& .MuiInputBase-root': {
-              py: 1.5,
-              px: 2,
-            },
-          }}
-          InputProps={{
-            endAdornment: (
-              <Box sx={{ 
-                display: 'flex', 
-                gap: 1,
-                alignItems: 'center',
-                mr: 1
-              }}>
-                {imageFile && (
-                  <Tooltip title={imageFile.name}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5,
-                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-                        borderRadius: '100px',
-                        padding: '4px 12px',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                        }
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageFile(null);
-                      }}
-                    >
-                      <ImageIcon sx={{ fontSize: 16 }} />
-                      <Typography variant="caption" sx={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {imageFile.name}
-                      </Typography>
-                      <Typography variant="caption" sx={{ ml: 0.5, opacity: 0.7 }}>×</Typography>
-                    </Box>
-                  </Tooltip>
-                )}
-                <Tooltip title="Add field image">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const input = document.querySelector('input[type="file"]');
-                      if (input) input.click();
-                    }}
-                    sx={{
-                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-                      '&:hover': {
-                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                      }
-                    }}
-                  >
-                    <Add sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={listening ? "Stop recording" : "Start voice input"}>
-                  <IconButton
-                    size="small"
-                    onClick={toggleListening}
-                    sx={{
-                      backgroundColor: listening 
-                        ? theme.palette.error.dark
-                        : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-                      color: listening ? '#fff' : 'inherit',
-                      '&:hover': {
-                        backgroundColor: listening
-                          ? theme.palette.error.main
-                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                      }
-                    }}
-                  >
-                    {listening ? <MicOff sx={{ fontSize: 20 }} /> : <MicNone sx={{ fontSize: 20 }} />}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <TextField
+            fullWidth
+            multiline
+            minRows={1}
+            maxRows={15}
+            placeholder="Ask anything"
+            value={textInput}
+            onChange={(e) => {
+              setTextInput(e.target.value);
+              setValidationError('');
+            }}
+            onKeyPress={handleSubmit}
+            disabled={loading}
+            sx={{
+              width: '100%',
+              '& .MuiInputBase-root': {
+                py: 1.5,
+                px: 2,
+                width: '100%',
+                alignItems: 'flex-start',
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(32, 33, 35, 1)' : 'rgba(0, 0, 0, 0.05)',
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(32, 33, 35, 0.9)' : 'rgba(0, 0, 0, 0.07)',
+                },
+                '& textarea': {
+                  fontSize: '16px',
+                  lineHeight: 1.5,
+                  transition: 'all 0.2s ease-in-out',
+                },
+                transition: 'border-radius 0.2s ease-in-out',
+                borderRadius: (theme) => {
+                  const numLines = (textInput.match(/\n/g) || []).length + 1;
+                  const baseRadius = 12;
+                  const minRadius = 4;
+                  // Decrease radius as lines increase, with a minimum
+                  return Math.max(baseRadius - (numLines - 1) * 2, minRadius) + 'px';
+                },
+                // Remove the focus outline
+                '& fieldset': {
+                  border: 'none',
+                },
+                '&.Mui-focused': {
+                  outline: 'none',
+                  '& fieldset': {
+                    border: 'none !important',
+                  }
+                },
+              },
+            }}
+          />
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1,
+            alignItems: 'center',
+            pl: 1,
+            justifyContent: 'space-between'
+          }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const input = document.querySelector('input[type="file"]');
+                  if (input) input.click();
+                }}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  backgroundColor: 'transparent',
+                  border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '50%',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)',
+                  }
+                }}
+              >
+                <Add sx={{ fontSize: 20 }} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={toggleListening}
+                disabled={!browserSupportsSpeechRecognition}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  backgroundColor: listening ? theme.palette.error.dark : 'transparent',
+                  border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)'),
+                  borderRadius: '50%',
+                  color: listening ? '#fff' : 'inherit',
+                  '&:hover': {
+                    backgroundColor: listening ? theme.palette.error.main : 'transparent',
+                    border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)'),
+                  },
+                  '&.Mui-disabled': {
+                    opacity: 0.5,
+                    backgroundColor: 'transparent',
+                    border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
+                  }
+                }}
+              >
+                {listening ? <MicOff sx={{ fontSize: 20 }} /> : <MicNone sx={{ fontSize: 20 }} />}
+              </IconButton>
+              {imageFile && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
+                    }
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImageFile(null);
+                  }}
+                >
+                  <ImageIcon sx={{ fontSize: 16 }} />
+                  <Typography variant="caption" sx={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {imageFile.name}
+                  </Typography>
+                  <Typography variant="caption" sx={{ ml: 0.5, opacity: 0.7 }}>×</Typography>
+                </Box>
+              )}
+            </Box>
+            <IconButton
+              size="small"
+              onClick={() => {
+                if (!textInput && !imageFile) {
+                  setValidationError('Please provide at least one form of input (text or image)');
+                  return;
+                }
+                const formData = new FormData();
+                if (textInput) formData.append('text', textInput);
+                if (imageFile) formData.append('image', imageFile);
+                onSubmit(formData);
+              }}
+              disabled={loading || (!textInput && !imageFile)}
+              sx={{
+                width: 32,
+                height: 32,
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(64, 65, 79, 1)' : 'rgba(0, 0, 0, 0.05)',
+                borderRadius: '50%',
+                color: (!textInput && !imageFile) ? 'rgba(255, 255, 255, 0.3)' : 'inherit',
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(71, 72, 89, 1)' : 'rgba(0, 0, 0, 0.1)',
+                },
+                '&.Mui-disabled': {
+                  opacity: 0.5,
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(64, 65, 79, 0.5)' : 'rgba(0, 0, 0, 0.03)',
+                }
+              }}
+            >
+              <ArrowUpward sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+        </Box>
         <input {...getInputProps()} />
       </Box>
 
@@ -236,6 +328,15 @@ const InputSection = ({ onSubmit, loading }) => {
           Listening... Speak to add text
         </Typography>
       </Collapse>
+
+      {!browserSupportsSpeech && (
+        <Alert 
+          severity="warning" 
+          sx={{ mt: 2 }}
+        >
+          Speech recognition is not supported in your browser. Please use Chrome for voice input functionality.
+        </Alert>
+      )}
     </Box>
   );
 };

@@ -135,6 +135,17 @@ function App() {
       const text = formData.get('text') || '';
       
       try {
+        // Convert image to base64 if present
+        let imageBase64 = null;
+        if (imageFile) {
+          const reader = new FileReader();
+          imageBase64 = await new Promise((resolve, reject) => {
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageFile);
+          });
+        }
+
         const response = await fetch('/user_chatbot_request', {
           method: 'POST',
           headers: {
@@ -142,7 +153,8 @@ function App() {
           },
           body: JSON.stringify({
             farmNum: selectedFarm,
-            text: text
+            text: text,
+            ...(imageBase64 && { image: imageBase64 })
           })
         });
         

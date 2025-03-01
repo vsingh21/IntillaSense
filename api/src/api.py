@@ -162,6 +162,25 @@ def chatbot_response():
     
     ILLINOIS_FARM_NUMBER = 1
     NORTH_DAKOTA_FARM_NUMBER = 2
+    image_response = client.chat.completions.create(
+        model="gpt-4o-2",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Describe this image thoroughly in 5 sentences. Start your response with 'The image I uploaded features'",
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                    },
+                ],
+            }
+        ],
+    )
+    chatbot_text+= " " + image_response.choices[0].message.content
 
     farmContext = {}
 
@@ -183,7 +202,6 @@ def chatbot_response():
     content = ""
     with open(txt_file_name, "r") as file:
         content = file.read()
-    print(content)
     
     farmContext["historical_weather_and_soil_data"] = content
 
@@ -202,10 +220,8 @@ def chatbot_response():
         chatbot_user_content.append(
             {
                 "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/jpeg;base64,{image}"
-                }
-            }
+                "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+            },
         )
 
     data = {
@@ -214,7 +230,6 @@ def chatbot_response():
             {"role": "user", "content": chatbot_user_content}
         ]
     }
-
     response = client.beta.chat.completions.parse(
         model=endpoints["gpt_40"],
         messages=data["messages"],

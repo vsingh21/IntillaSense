@@ -1,7 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Container, CssBaseline, Box, Paper, Snackbar, Alert, IconButton, Typography } from '@mui/material';
-import { Brightness4, Brightness7 } from '@mui/icons-material';
+import { 
+  Container, 
+  CssBaseline, 
+  Box, 
+  Paper, 
+  Snackbar, 
+  Alert, 
+  IconButton, 
+  Typography,
+  ButtonGroup,
+  Button,
+  Fade
+} from '@mui/material';
+import { 
+  Brightness4, 
+  Brightness7, 
+  Search, 
+  Psychology, 
+  Add,
+  KeyboardArrowUp 
+} from '@mui/icons-material';
 import InputSection from './components/InputSection';
 import RecommendationDisplay from './components/RecommendationDisplay';
 import './App.css';
@@ -10,7 +29,22 @@ function App() {
   const [recommendation, setRecommendation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [mode, setMode] = useState('dark');
+  const [mode, setMode] = useState('light');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Handle scroll to show/hide scroll to top button
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.pageYOffset > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const theme = useMemo(
     () =>
@@ -24,7 +58,7 @@ function App() {
             main: mode === 'dark' ? '#a1887f' : '#795548',
           },
           background: {
-            default: mode === 'dark' ? '#121212' : '#f5f5f5',
+            default: mode === 'dark' ? '#121212' : '#ffffff',
             paper: mode === 'dark' ? '#1e1e1e' : '#ffffff',
           },
         },
@@ -33,13 +67,31 @@ function App() {
             styleOverrides: {
               root: {
                 '& .MuiOutlinedInput-root': {
+                  borderRadius: '100px',
+                  backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
                   '& fieldset': {
-                    borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                    borderColor: 'transparent',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
                   },
                 },
               },
             },
           },
+          MuiPaper: {
+            styleOverrides: {
+              root: {
+                backgroundImage: 'none',
+              },
+            },
+          },
+        },
+        shape: {
+          borderRadius: 20,
         },
       }),
     [mode],
@@ -94,25 +146,142 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="lg">
-        <Box sx={{ my: 4, position: 'relative' }}>
-          <Box sx={{ position: 'absolute', right: 0, top: 0 }}>
-            <IconButton onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')} color="inherit">
-              {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-          </Box>
-          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
+      <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 4 }}>
+        {/* Header with IntillaSense logo and theme toggle */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          mb: 8
+        }}>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              fontWeight: 'bold',
+              background: mode === 'dark' 
+                ? 'linear-gradient(45deg, #4caf50 30%, #81c784 90%)'
+                : 'linear-gradient(45deg, #2e7d32 30%, #4caf50 90%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
             IntillaSense
           </Typography>
-          <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-            <InputSection onSubmit={handleSubmission} loading={loading} />
-          </Paper>
-          {recommendation && (
-            <Paper elevation={3} sx={{ p: 3 }}>
-              <RecommendationDisplay recommendation={recommendation} />
+          <IconButton 
+            onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')} 
+            sx={{ 
+              color: theme.palette.text.primary,
+              backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              '&:hover': {
+                backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+              }
+            }}
+          >
+            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+        </Box>
+
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 4,
+        }}>
+          {/* Main title section */}
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Typography 
+              variant="h2" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 'bold',
+                color: theme.palette.text.primary,
+                mb: 2
+              }}
+            >
+              What can I help with?
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+              Get smart tillage recommendations for your field
+            </Typography>
+          </Box>
+
+          {/* Main input section with action buttons */}
+          <Box sx={{ width: '100%', maxWidth: 800, mx: 'auto' }}>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: 2,
+                backgroundColor: 'transparent'
+              }}
+            >
+              <InputSection onSubmit={handleSubmission} loading={loading} />
+              
+              {/* Action buttons */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <ButtonGroup variant="text" size="large">
+                  <Button 
+                    startIcon={<Search />}
+                    sx={{ borderRadius: '100px', px: 3 }}
+                  >
+                    Search
+                  </Button>
+                  <Button 
+                    startIcon={<Psychology />}
+                    sx={{ borderRadius: '100px', px: 3 }}
+                  >
+                    Reason
+                  </Button>
+                  <Button 
+                    startIcon={<Add />}
+                    sx={{ borderRadius: '100px', px: 3 }}
+                  >
+                    Add Field
+                  </Button>
+                </ButtonGroup>
+              </Box>
             </Paper>
+          </Box>
+
+          {/* Recommendations display */}
+          {recommendation && (
+            <Fade in={true}>
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 4,
+                  width: '100%',
+                  maxWidth: 800,
+                  mx: 'auto',
+                  backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                }}
+              >
+                <RecommendationDisplay recommendation={recommendation} />
+              </Paper>
+            </Fade>
           )}
         </Box>
+
+        {/* Scroll to top button */}
+        <Fade in={showScrollTop}>
+          <IconButton
+            onClick={scrollToTop}
+            sx={{
+              position: 'fixed',
+              bottom: 20,
+              right: 20,
+              backgroundColor: theme.palette.primary.main,
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: theme.palette.primary.dark,
+              },
+            }}
+          >
+            <KeyboardArrowUp />
+          </IconButton>
+        </Fade>
+
+        {/* Error snackbar */}
         <Snackbar 
           open={!!error} 
           autoHideDuration={6000} 

@@ -2,9 +2,10 @@ import time
 from flask import Flask, request
 from openai import AzureOpenAI
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import os
 import json
+from enum import Enum
 
 load_dotenv()
 
@@ -110,17 +111,28 @@ endpoints = {
 app = Flask(__name__)
 
 
-class TillageRecommendationAlternative(BaseModel):
+class TillageOption(BaseModel):
     equipment: str
     estimated_total_cost: float
+
+
+class RainfallTrend(Enum):
+    INCREASING = 1
+    STEADY = 2
+    DECREASING = 3
+
+class FieldSpecificRecommendations(BaseModel):
+    soil_type: str
+    rainfall_trend: RainfallTrend
+
 class TillageRecommendation(BaseModel):
-    primary_equipment_recommendation: str
-    estimated_total_cost: float
     benefits: list[str]
-    field_specific_factors: list[str]
-    alternative_option_1: TillageRecommendationAlternative
-    alternative_option_2: TillageRecommendationAlternative
+    field_specific_factors: FieldSpecificRecommendations
+    primary_option: TillageOption
+    alternative_option_1: TillageOption
+    alternative_option_2: TillageOption
     summary_info_blurb: str
+    response_to_user_question: str
 
 @app.route('/user_chatbot_request')
 def chatbot_reponse():

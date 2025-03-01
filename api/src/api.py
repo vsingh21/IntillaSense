@@ -117,11 +117,43 @@ def chatbot_reponse():
     chatbot_text = request.args.get('text', type = str)
     image = request.args.get('image', default='NO_IMAGE', type=str)
     
+    ILLINOIS_FARM_NUMBER = 1
+    NORTH_DAKOTA_FARM_NUMBER = 2
+
+    farmContext = {}
+
+    if farmNumber == ILLINOIS_FARM_NUMBER:
+        farmContext['coordinates'] = ILLINOIS_COORDINATES
+        farmContext['available_equipment'] = ILLINOIS_EQUIPMENT
+    elif farmNumber == NORTH_DAKOTA_FARM_NUMBER:
+        farmContext['coordinates'] = NORTH_DAKOTA_COORDINATES
+        farmContext['available_equipment'] = NORTH_DAKOTA_EQUIPMENT
+
+    chatbot_system_content = "You are an AI chatbot that analyzes farm and environmental conditions to suggest optimal tillage dates, methods, and cost comparisons to a farmer. Create clear, data-driven insights that empower the farmer to make smart, sustainable decisions!"
+    
+    if farmContext != {}:
+        chatbot_system_content += "Here is some context about the farm the user owns: " + str(farmContext)
+
+    chatbot_user_content = [
+        {
+         'type': 'text',
+         'text': chatbot_text
+        }
+    ]
+    if (image != 'NO_IMAGE'):
+        chatbot_user_content.append(
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{image}"
+                }
+            }
+        )
 
     data = {
         "messages": [
-            {"role": "system", "content": "You are an AI chatbot that analyzes farm and environmental conditions to suggest optimal tillage dates, methods, and cost comparisons. Create clear, data-driven insights that empower farmers to make smart, sustainable decisions!"},
-            {"role": "user", "content": "What are the benefits of no-till farming?"}
+            {"role": "system", "content": chatbot_system_content},
+            {"role": "user", "content": chatbot_user_content}
         ]
     }
 

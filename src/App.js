@@ -126,6 +126,11 @@ function App() {
       // Add the selected farm to the form data
       formData.append('farmNum', selectedFarm);
 
+      // Helper function to capitalize first letter of each word
+      const capitalizeWords = (str) => {
+        return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+      };
+
       // Make the API request to /user_chatbot_request
       const text = formData.get('text') || '';
       
@@ -146,28 +151,29 @@ function App() {
 
         const recommendation = {
           responseToUser: data.response_to_user_question,
-          primaryMethod: data.primary_option.equipment,
-          estimatedCost: data.primary_option.total_cost_of_this_option,
-          benefits: data.benefits,
+          primaryMethod: capitalizeWords(data.primary_tillage_option.equipment),
+          estimatedCost: data.primary_tillage_option.total_cost_of_this_option,
+          benefits: data.benefits_of_primary_tillage_option.map(benefit => benefit.charAt(0).toUpperCase() + benefit.slice(1)),
           factors: [
-            `Soil Type: ${data.field_specific_factors.soil_type}`,
+            `Soil Type: ${capitalizeWords(data.field_specific_factors.soil_type)}`,
+            `Previously Planted Crop: ${capitalizeWords(data.field_specific_factors.previously_planted_crop)}`,
             `Rainfall Trend: ${data.field_specific_factors.rainfall_trend === 2 ? 'Steady' : data.field_specific_factors.rainfall_trend === 1 ? 'Increasing' : 'Decreasing'}`,
           ],
           alternativeOptions: [
             {
-              method: data.alternative_option_1.equipment,
-              cost: data.alternative_option_1.total_cost_of_this_option
+              method: capitalizeWords(data.alternative_tillage_option_1.equipment),
+              cost: data.alternative_tillage_option_1.total_cost_of_this_option
             },
             {
-              method: data.alternative_option_2.equipment,
-              cost: data.alternative_option_2.total_cost_of_this_option
+              method: capitalizeWords(data.alternative_tillage_option_2.equipment),
+              cost: data.alternative_tillage_option_2.total_cost_of_this_option
             }
           ],
-          explanation: data.summary_info_blurb,
+          explanation: data.summary_info_blurb.charAt(0).toUpperCase() + data.summary_info_blurb.slice(1),
           tillageDates: {
             fall: data.tillage_dates.optimal_fall_tillage_date,
             spring: data.tillage_dates.optimal_spring_tillage_date,
-            explanation: data.tillage_dates.reason_for_tillage_dates
+            explanation: data.tillage_dates.reason_for_tillage_dates.charAt(0).toUpperCase() + data.tillage_dates.reason_for_tillage_dates.slice(1)
           }
         };
 
@@ -301,8 +307,25 @@ function App() {
               >
                 What can I help with?
               </Typography>
-              <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-                Get smart tillage recommendations for your field
+              <Typography 
+                variant="h6" 
+                color="text.secondary" 
+                sx={{ 
+                  maxWidth: 600, 
+                  mx: 'auto',
+                  fontStyle: 'italic',
+                  '& .highlight': {
+                    background: mode === 'dark' 
+                      ? 'linear-gradient(45deg, #4caf50 30%, #81c784 90%)'
+                      : 'linear-gradient(45deg, #2e7d32 30%, #4caf50 90%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    color: 'transparent',
+                    display: 'inline',
+                  }
+                }}
+              >
+                Data-driven insights <span className="highlight">from the ground up</span>
               </Typography>
             </Box>
 

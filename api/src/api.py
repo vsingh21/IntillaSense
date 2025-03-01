@@ -2,12 +2,14 @@ import time
 from flask import Flask, request
 from openai import AzureOpenAI
 from dotenv import load_dotenv
+from pydantic import BaseModel
 import os
+import json
 
 load_dotenv()
 
-ILLINOIS_COORDINATES = ["40 51 59 N, 88 40 14 W", "40 51 59 N, 88 40 05 W", "40 51 50 N, 88 40 14 W", "40 51 50 N, 88 40 05 W"]
-NORTH_DAKOTA_COORDINATES = ["46 52 08 N, 91 17 04 W", "46 52 07 N, 97 16 27 W", "46 52 30 N, 97 16 27 W", "46 52 30 N, 97 17 04 W"]
+ILLINOIS_FARM_SIZE = 14.6
+NORTH_DAKOTA_FARM_SIZE = 136.4
 NORTH_DAKOTA_EQUIPMENT = [
     {
         "owner": "FARMER",
@@ -111,6 +113,19 @@ app = Flask(__name__)
 def get_current_time():
     return {'time': time.time()}
 
+
+class TillageRecommendationAlternative(BaseModel):
+    equipment: str
+    estimated_total_cost: float
+class TillageRecommendation(BaseModel):
+    primary_equipment_recommendation: str
+    estimated_total_cost: float
+    benefits: list[str]
+    field_specific_factors: list[str]
+    alternative_option_1: TillageRecommendationAlternative
+    alternative_option_2: TillageRecommendationAlternative
+    summary_info_blurb: str
+
 @app.route('/user_chatbot_request')
 def chatbot_reponse():
     farmNumber = request.args.get('farmNum', type = int)
@@ -123,16 +138,16 @@ def chatbot_reponse():
     farmContext = {}
 
     if farmNumber == ILLINOIS_FARM_NUMBER:
-        farmContext['coordinates'] = ILLINOIS_COORDINATES
+        farmContext['farm_size(acres)'] = ILLINOIS_FARM_SIZE
         farmContext['available_equipment'] = ILLINOIS_EQUIPMENT
     elif farmNumber == NORTH_DAKOTA_FARM_NUMBER:
-        farmContext['coordinates'] = NORTH_DAKOTA_COORDINATES
+        farmContext['farm_size(acres)'] = NORTH_DAKOTA_FARM_SIZE
         farmContext['available_equipment'] = NORTH_DAKOTA_EQUIPMENT
 
-    chatbot_system_content = "You are an AI chatbot that analyzes farm and environmental conditions to suggest optimal tillage dates, methods, and cost comparisons to a farmer. Create clear, data-driven insights that empower the farmer to make smart, sustainable decisions!"
+    chatbot_system_content = "You are an AI chatbot that analyzes farm and environmental conditions to suggest optimal tillage dates, methods, and cost comparisons to a farmer. Create clear, data-driven insights that empower the farmer to make smart, sustainable decisions! Please keep in mind the difference between cost/acre and total cost. You may only pick from the options available to the farmer."
     
     if farmContext != {}:
-        chatbot_system_content += "Here is some context about the farm the user owns: " + str(farmContext)
+        chatbot_system_content += "Here is some context about the farm the user owns, including the size of the farm and the equipment and services available: " + str(farmContext)
 
     chatbot_user_content = [
         {
@@ -157,8 +172,10 @@ def chatbot_reponse():
         ]
     }
 
-    response = client.chat.completions.create(
+    response = client.beta.chat.completions.parse(
         model=endpoints["gpt_40"],
-        messages=data["messages"]
+        messages=data["messages"],
+        response_format=TillageRecommendation
     )
-    return response.choices[0].message.content
+
+    return json.loads(response.choices[0].message.content)

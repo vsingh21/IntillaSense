@@ -1,5 +1,11 @@
 import time
-from flask import Flask
+from flask import Flask, request
+import requests
+import json
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 ILLINOIS_COORDINATES = ["40 51 59 N, 88 40 14 W", "40 51 59 N, 88 40 05 W", "40 51 50 N, 88 40 14 W", "40 51 50 N, 88 40 05 W"]
 NORTH_DAKOTA_COORDINATES = ["46 52 08 N, 91 17 04 W", "46 52 07 N, 97 16 27 W", "46 52 30 N, 97 16 27 W", "46 52 30 N, 97 17 04 W"]
@@ -93,3 +99,25 @@ app = Flask(__name__)
 @app.route('/time')
 def get_current_time():
     return {'time': time.time()}
+
+@app.route('/user_chatbot_request')
+def chatbot_reponse():
+    farmNumber = request.args.get('farmNum', type = int)
+    chatbot_text = request.args.get('text', type = str)
+    image = request.args.get('image', default='NO_IMAGE', type=str)
+    
+
+    headers = {
+    "Content-Type": "application/json",
+    "api-key": os.getenv("API_KEY")
+    }
+
+    data = {
+        "messages": [
+            {"role": "system", "content": "You are an AI assistant."},
+            {"role": "user", "content": "What are the benefits of no-till farming?"}
+        ]
+    }
+
+    response = requests.post(os.getenv('GPT_URL_4o'), headers=headers, data=json.dumps(data))
+    return response.json()

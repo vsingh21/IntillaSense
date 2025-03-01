@@ -139,11 +139,11 @@ class TillageDates(BaseModel):
     reason_for_tillage_dates: str
 
 class TillageRecommendation(BaseModel):
-    benefits: list[str]
+    benefits_of_primary_tillage_option: list[str]
     field_specific_factors: FieldSpecificRecommendations
-    primary_option: TillageOption
-    alternative_option_1: TillageOption
-    alternative_option_2: TillageOption
+    primary_tillage_option: TillageOption
+    alternative_tillage_option_1: TillageOption
+    alternative_tillage_option_2: TillageOption
     summary_info_blurb: str
     response_to_user_question: str
     tillage_dates: TillageDates
@@ -187,10 +187,10 @@ def chatbot_response():
     
     farmContext["historical_weather_and_soil_data"] = content
 
-    chatbot_system_content = "You are an AI chatbot that analyzes the given farm and environmental conditions to suggest optimal tillage dates, methods, and cost comparisons to the farmer, whom you are talking to. Create clear, data-driven insights that empower the farmer to make smart, sustainable tillage decisions. You may only pick from the options available to the farmer. Remember that the current date is " + datetime.today().strftime('%Y-%m-%d')
+    chatbot_system_content = "You are an AI chatbot that analyzes the given farm and provided data to suggest optimal tillage dates, methods, and cost comparisons to the farmer, whom you are talking to. Create clear, data-driven insights that empower the farmer to make smart, sustainable tillage decisions for the upcoming planting season. You may only pick from the options available to the farmer and should maximize your use of supplied historical data in reasoning and explaining your decisions. Remember that the current date is " + datetime.today().strftime('%Y-%m-%d')
     
     if farmContext != {}:
-        chatbot_system_content += "Here is some context about the farm the user owns, including the size of the farm and the equipment and services available: " + str(farmContext)
+        chatbot_system_content += "Here is the important data about the farm the user owns, including the size of the farm, its planting history, equipment and services available, historical weather and soil data, and location: " + str(farmContext)
 
     chatbot_user_content = [
         {

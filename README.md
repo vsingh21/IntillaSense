@@ -3,8 +3,8 @@
 <h1>Pictures</h1>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/00cb2774-65c2-4ff0-ab97-529fe7d7b8ba" width="49%">
-  <img src="https://github.com/user-attachments/assets/a613c4d8-83fd-4772-96f1-cdbc9292f0e3" width="49%">
+  <img width="1920" alt="Screenshot 2025-03-02 at 6 28 43 AM" src="https://github.com/user-attachments/assets/4875bf81-b31d-4db5-8c7b-15ba67d37df9" />
+  <img width="961" alt="Screenshot 2025-03-02 at 6 28 23 AM" src="https://github.com/user-attachments/assets/c666e00d-ad58-4519-b927-f2c73a70bf0f" />
 </p>
 
 

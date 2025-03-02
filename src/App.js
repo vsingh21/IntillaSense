@@ -33,6 +33,9 @@ import ChatSidebar from './components/ChatSidebar';
 import './App.css';
 
 function App() {
+  useEffect(() => {
+    document.title = "IntillaSense"; // Change to your desired title
+  }, []);
   const [recommendation, setRecommendation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

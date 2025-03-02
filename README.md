@@ -1,8 +1,12 @@
 # IntillaSense
 
 <h1>Pictures</h1>
-![Screenshot 2025-03-01 at 9 32 36 PM](https://github.com/user-attachments/assets/4d09356d-f618-4772-b732-2032595a121e)
-![Screenshot 2025-03-01 at 9 32 27 PM](https://github.com/user-attachments/assets/4e9c51fc-bdcb-4477-b261-753d57725b2d)
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/00cb2774-65c2-4ff0-ab97-529fe7d7b8ba" width="49%">
+  <img src="https://github.com/user-attachments/assets/a613c4d8-83fd-4772-96f1-cdbc9292f0e3" width="49%">
+</p>
+
 
 
 

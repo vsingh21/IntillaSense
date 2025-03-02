@@ -225,8 +225,6 @@ def chatbot_response():
             'text': "Here is the previous chat history between you and the user: " + str(chat_history)
         }
     ]
-    
-    print(chatbot_user_chat_history)
 
     data = {
         "messages": [

@@ -27,7 +27,9 @@ Creates a virtual python environment
 
 Activates the python virtual environment
 
-### pip install -r ./src/requirements.txt
+### `pip install -r ./src/requirements.txt`
+
+Installs all required python modules
 
 <h1>Run</h1>
 

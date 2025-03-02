@@ -31,6 +31,12 @@ Activates the python virtual environment
 
 Installs all required python modules
 
+In the `/api/src` directory
+
+### `.env`
+
+You need to create a .env and define these two variables `API_KEY`,`AZURE_OPENAI_ENDPOINT`
+
 <h1>Run</h1>
 
 In the `/intillasense` directory, you can run:

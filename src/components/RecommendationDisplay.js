@@ -28,7 +28,7 @@ const RecommendationDisplay = ({ recommendation, onSwitchCommand }) => {
   };
 
   const handleAlternativeClick = (index) => {
-    const switchCommand = `switch the primary recommendation with alternative option ${index + 1}`;
+    const switchCommand = `Switch the Primary Recommendation (${recommendation.primaryMethod}) with Alternative Option ${index + 1} (${recommendation.alternativeOptions[index].method})`;
     onSwitchCommand(switchCommand);
   };
 
@@ -189,10 +189,22 @@ const RecommendationDisplay = ({ recommendation, onSwitchCommand }) => {
 
           {recommendation.alternativeOptions?.map((option, index) => (
             <Grid item xs={12} md={6} key={index}>
-              <Card sx={{ 
-                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
-                borderRadius: 2 
-              }}>
+              <Card 
+                onClick={() => handleAlternativeClick(index)}
+                sx={{ 
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  border: '2px solid transparent',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                    transform: 'translateY(-2px)',
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: `0 0 10px ${theme.palette.primary.main}20`
+                  }
+                }}
+              >
                 <CardContent>
                   <Typography variant="h6" color="secondary" gutterBottom>
                     Alternative Option {index + 1}

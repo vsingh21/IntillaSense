@@ -294,17 +294,17 @@ const InputSection = ({ onSubmit, loading, imageFile, setImageFile, recommendati
           sx={{
             width: 32,
             height: 32,
-            backgroundColor: listening ? theme.palette.error.dark : 'transparent',
-            border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)'),
+            backgroundColor: listening ? 'rgba(211, 47, 47, 0.1)' : 'transparent',
+            border: listening ? '2px solid #d32f2f' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)'),
             borderRadius: '50%',
-            color: listening ? '#fff' : 'inherit',
+            color: listening ? '#d32f2f' : 'inherit',
             '&:hover': {
-              backgroundColor: listening ? theme.palette.error.main : 'transparent',
-              border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)'),
+              backgroundColor: listening ? 'rgba(211, 47, 47, 0.2)' : 'transparent',
+              border: listening ? '2px solid #d32f2f' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)'),
             },
           }}
         >
-          {listening ? <MicOff sx={{ fontSize: 20 }} /> : <MicNone sx={{ fontSize: 20 }} />}
+          <MicNone sx={{ fontSize: 20 }} />
         </IconButton>
 
         <IconButton

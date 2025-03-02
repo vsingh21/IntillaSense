@@ -448,6 +448,12 @@ function App() {
     }
   });
 
+  const handleSwitchCommand = (text) => {
+    const formData = new FormData();
+    formData.append('text', text);
+    handleSubmission(formData);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -830,7 +836,7 @@ function App() {
                       elevation={0} 
                       sx={{ 
                         p: 4,
-                        width: { xs: '100%', md: '40%' }, // Increased width from 30% to 40%
+                        width: { xs: '100%', md: '40%' },
                         backgroundColor: mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
                         opacity: chatHistory.length > 0 ? 1 : 0,
                         visibility: chatHistory.length > 0 ? 'visible' : 'hidden',
@@ -861,7 +867,10 @@ function App() {
                           </Typography>
                         </Box>
                       ) : recommendation && (
-                        <RecommendationDisplay recommendation={recommendation} />
+                        <RecommendationDisplay 
+                          recommendation={recommendation} 
+                          onSwitchCommand={handleSwitchCommand}
+                        />
                       )}
                     </Paper>
                   </Fade>

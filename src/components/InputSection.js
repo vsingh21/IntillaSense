@@ -8,7 +8,8 @@ import {
   Collapse,
   Tooltip,
   Alert,
-  Button
+  Button,
+  Paper
 } from '@mui/material';
 import { 
   MicNone, 
@@ -16,11 +17,12 @@ import {
   Image as ImageIcon,
   Add,
   Search,
-  ArrowUpward
+  ArrowUpward,
+  Close
 } from '@mui/icons-material';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
-const InputSection = ({ onSubmit, loading, imageFile, setImageFile }) => {
+const InputSection = ({ onSubmit, loading, imageFile, setImageFile, recommendation }) => {
   const theme = useTheme();
   const [textInput, setTextInput] = useState('');
   const [validationError, setValidationError] = useState('');
@@ -28,10 +30,13 @@ const InputSection = ({ onSubmit, loading, imageFile, setImageFile }) => {
 
   const {
     transcript,
+    finalTranscript,
     listening,
     resetTranscript,
     browserSupportsSpeechRecognition
-  } = useSpeechRecognition();
+  } = useSpeechRecognition({
+    clearTranscriptOnListen: true
+  });
 
   useEffect(() => {
     if (!browserSupportsSpeechRecognition) {
@@ -40,15 +45,14 @@ const InputSection = ({ onSubmit, loading, imageFile, setImageFile }) => {
   }, [browserSupportsSpeechRecognition]);
 
   useEffect(() => {
-    if (transcript && listening) {
+    if (finalTranscript && listening) {
       setTextInput((prevText) => {
-        const prefix = prevText ? prevText + ' ' : '';
-        return prefix + transcript;
+        const newText = prevText ? `${prevText} ${finalTranscript}` : finalTranscript;
+        return newText;
       });
-      console.log('Current voice transcript:', transcript);
       resetTranscript();
     }
-  }, [transcript, listening, resetTranscript]);
+  }, [finalTranscript, listening]);
 
   const handleSubmit = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -64,6 +68,13 @@ const InputSection = ({ onSubmit, loading, imageFile, setImageFile }) => {
       if (imageFile) formData.append('image', imageFile);
       
       onSubmit(formData);
+      setTextInput('');
+      setImageFile(null);
+      // Reset file input
+      const fileInput = document.getElementById('file-input');
+      if (fileInput) {
+        fileInput.value = '';
+      }
     }
   };
 
@@ -79,199 +90,279 @@ const InputSection = ({ onSubmit, loading, imageFile, setImageFile }) => {
     } else {
       console.log('Starting voice recording...');
       setValidationError('');
+      resetTranscript();
       SpeechRecognition.startListening({ 
         continuous: true,
+        interimResults: false,
         language: 'en-US'
       });
     }
   };
 
   return (
-    <Box 
-      sx={{ 
-        width: '100%',
-        position: 'relative',
-      }}
-    >
-      <Box sx={{ position: 'relative' }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <TextField
-            fullWidth
-            multiline
-            minRows={1}
-            maxRows={15}
-            autoFocus
-            placeholder="Ask anything"
-            value={textInput}
-            onChange={(e) => {
-              setTextInput(e.target.value);
-              setValidationError('');
-            }}
-            onKeyPress={handleSubmit}
-            disabled={loading}
-            sx={{
-              width: '100%',
-              '& .MuiInputBase-root': {
-                py: 1.5,
-                px: 2,
-                width: '100%',
-                alignItems: 'flex-start',
-                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(32, 33, 35, 1)' : 'rgba(0, 0, 0, 0.05)',
-                '&:hover': {
-                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(32, 33, 35, 0.9)' : 'rgba(0, 0, 0, 0.07)',
-                },
-                '& textarea': {
-                  fontSize: '16px',
-                  lineHeight: 1.5,
-                  transition: 'all 0.2s ease-in-out',
-                },
-                transition: 'border-radius 0.2s ease-in-out',
-                borderRadius: (theme) => {
-                  const numLines = (textInput.match(/\n/g) || []).length + 1;
-                  const baseRadius = 12;
-                  const minRadius = 4;
-                  // Decrease radius as lines increase, with a minimum
-                  return Math.max(baseRadius - (numLines - 1) * 2, minRadius) + 'px';
-                },
-                // Remove the focus outline
-                '& fieldset': {
-                  border: 'none',
-                },
-                '&.Mui-focused': {
-                  outline: 'none',
-                  '& fieldset': {
-                    border: 'none !important',
-                  }
-                },
-              },
-            }}
-          />
+    <Box sx={{ 
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2,
+    }}>
+      {/* Image Preview */}
+      <Collapse in={!!imageFile}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-start', 
+          mb: 2,
+          pl: 2
+        }}>
           <Box sx={{ 
-            display: 'flex', 
-            gap: 1,
-            alignItems: 'center',
-            pl: 1,
-            justifyContent: 'space-between'
+            position: 'relative',
+            width: 'fit-content'
           }}>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <input
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                      setValidationError('File size must be less than 5MB');
-                      return;
-                    }
-                    setImageFile(file);
-                    setValidationError('');
-                  }
+            <Paper
+              elevation={0}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                p: 1,
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(64, 65, 79, 1)' : 'rgba(0, 0, 0, 0.05)',
+                borderRadius: '12px',
+              }}
+            >
+              <Box 
+                component="img"
+                src={imageFile ? URL.createObjectURL(imageFile) : ''}
+                sx={{ 
+                  width: 40,
+                  height: 40,
+                  objectFit: 'cover',
+                  borderRadius: '8px'
                 }}
-                id="file-input"
               />
-              <IconButton
-                size="small"
-                onClick={() => document.getElementById('file-input').click()}
-                sx={{
-                  width: 32,
-                  height: 32,
-                  backgroundColor: 'transparent',
-                  border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)',
-                  borderRadius: '50%',
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)',
-                  }
-                }}
-              >
-                <Add sx={{ fontSize: 20 }} />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={toggleListening}
-                disabled={!browserSupportsSpeechRecognition}
-                sx={{
-                  width: 32,
-                  height: 32,
-                  backgroundColor: listening ? theme.palette.error.dark : 'transparent',
-                  border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)'),
-                  borderRadius: '50%',
-                  color: listening ? '#fff' : 'inherit',
-                  '&:hover': {
-                    backgroundColor: listening ? theme.palette.error.main : 'transparent',
-                    border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)'),
-                  },
-                  '&.Mui-disabled': {
-                    opacity: 0.5,
-                    backgroundColor: 'transparent',
-                    border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
-                  }
-                }}
-              >
-                {listening ? <MicOff sx={{ fontSize: 20 }} /> : <MicNone sx={{ fontSize: 20 }} />}
-              </IconButton>
-              {imageFile && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-                    borderRadius: '4px',
-                    padding: '4px 8px',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                    }
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setImageFile(null);
-                  }}
-                >
-                  <ImageIcon sx={{ fontSize: 16 }} />
-                  <Typography variant="caption" sx={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {imageFile.name}
-                  </Typography>
-                  <Typography variant="caption" sx={{ ml: 0.5, opacity: 0.7 }}>×</Typography>
-                </Box>
-              )}
-            </Box>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <Typography variant="body2">
+                  {imageFile?.name || 'Uploaded image'}
+                </Typography>
+              </Box>
+            </Paper>
             <IconButton
               size="small"
               onClick={() => {
-                if (!textInput && !imageFile) {
-                  setValidationError('Please provide at least one form of input (text or image)');
-                  return;
+                setImageFile(null);
+                // Reset the file input
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) {
+                  fileInput.value = '';
                 }
-                const formData = new FormData();
-                if (textInput) formData.append('text', textInput);
-                if (imageFile) formData.append('image', imageFile);
-                onSubmit(formData);
               }}
-              disabled={loading || (!textInput && !imageFile)}
               sx={{
-                width: 32,
-                height: 32,
-                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(64, 65, 79, 1)' : 'rgba(0, 0, 0, 0.05)',
-                borderRadius: '50%',
-                color: (!textInput && !imageFile) ? 'rgba(255, 255, 255, 0.3)' : 'inherit',
+                position: 'absolute',
+                top: -8,
+                right: -8,
+                width: 20,
+                height: 20,
+                backgroundColor: theme.palette.error.main,
+                color: '#fff',
                 '&:hover': {
-                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(71, 72, 89, 1)' : 'rgba(0, 0, 0, 0.1)',
+                  backgroundColor: theme.palette.error.dark,
                 },
-                '&.Mui-disabled': {
-                  opacity: 0.5,
-                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(64, 65, 79, 0.5)' : 'rgba(0, 0, 0, 0.03)',
-                }
               }}
             >
-              <ArrowUpward sx={{ fontSize: 18 }} />
+              <Close sx={{ fontSize: 14 }} />
             </IconButton>
           </Box>
         </Box>
-      </Box>
+      </Collapse>
+
+      <Paper
+        elevation={0}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          p: 1.5,
+          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(64, 65, 79, 1)' : 'rgba(0, 0, 0, 0.05)',
+          borderRadius: '12px',
+          width: '100%',
+          maxWidth: '100%',
+          mx: 'auto',
+          px: 3,
+          boxShadow: theme.palette.mode === 'dark' 
+            ? '0 0 15px rgba(0, 0, 0, 0.2)' 
+            : '0 0 15px rgba(0, 0, 0, 0.05)',
+        }}
+      >
+        <Box sx={{ position: 'relative', display: 'inline-block' }}>
+          <IconButton
+            size="small"
+            onClick={() => document.getElementById('file-input').click()}
+            sx={{
+              width: 32,
+              height: 32,
+              backgroundColor: 'transparent',
+              border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              position: 'relative',
+              color: 'inherit',
+              '&:hover': {
+                backgroundColor: 'transparent',
+                border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)',
+              }
+            }}
+          >
+            <Add sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Box>
+
+        <TextField
+          fullWidth
+          multiline
+          minRows={1}
+          maxRows={10}
+          placeholder="Ask anything"
+          value={textInput}
+          onChange={(e) => {
+            setTextInput(e.target.value);
+            setValidationError('');
+          }}
+          onKeyPress={handleSubmit}
+          onPaste={(e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            let hasImage = false;
+            for (let item of items) {
+              if (item.type.startsWith('image/')) {
+                hasImage = true;
+                const file = item.getAsFile();
+                if (file) {
+                  const newFile = new File([file], `pasted-image.${file.type.split('/')[1]}`, {
+                    type: file.type,
+                    lastModified: new Date().getTime()
+                  });
+                  
+                  if (newFile.size <= 5 * 1024 * 1024) {
+                    setImageFile(newFile);
+                    setValidationError('');
+                  } else {
+                    setValidationError('File size must be less than 5MB');
+                  }
+                }
+                break;
+              }
+            }
+            
+            if (hasImage) {
+              e.preventDefault();
+            }
+          }}
+          disabled={loading}
+          sx={{
+            '& .MuiInputBase-root': {
+              py: 1,
+              px: 2,
+              backgroundColor: 'transparent',
+              '&:hover': {
+                backgroundColor: 'transparent',
+              },
+              '& textarea': {
+                fontSize: '16px',
+                lineHeight: 1.5,
+              },
+              borderRadius: '8px',
+              '& fieldset': {
+                border: 'none',
+              },
+              '&.Mui-focused': {
+                '& fieldset': {
+                  border: 'none !important',
+                }
+              },
+            },
+          }}
+        />
+
+        <IconButton
+          size="small"
+          onClick={toggleListening}
+          disabled={!browserSupportsSpeechRecognition}
+          sx={{
+            width: 32,
+            height: 32,
+            backgroundColor: listening ? theme.palette.error.dark : 'transparent',
+            border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)'),
+            borderRadius: '50%',
+            color: listening ? '#fff' : 'inherit',
+            '&:hover': {
+              backgroundColor: listening ? theme.palette.error.main : 'transparent',
+              border: listening ? 'none' : (theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(0, 0, 0, 0.2)'),
+            },
+          }}
+        >
+          {listening ? <MicOff sx={{ fontSize: 20 }} /> : <MicNone sx={{ fontSize: 20 }} />}
+        </IconButton>
+
+        <IconButton
+          size="small"
+          onClick={() => {
+            if (!textInput && !imageFile) {
+              setValidationError('Please provide at least one form of input (text or image)');
+              return;
+            }
+            const formData = new FormData();
+            if (textInput) formData.append('text', textInput);
+            if (imageFile) formData.append('image', imageFile);
+            onSubmit(formData);
+            setTextInput('');
+            setImageFile(null);
+            // Reset file input
+            const fileInput = document.getElementById('file-input');
+            if (fileInput) {
+              fileInput.value = '';
+            }
+          }}
+          disabled={loading || (!textInput && !imageFile)}
+          sx={{
+            width: 32,
+            height: 32,
+            backgroundColor: (!textInput && !imageFile) ? 'transparent' : theme.palette.primary.main,
+            borderRadius: '50%',
+            color: (!textInput && !imageFile) ? 'inherit' : '#fff',
+            '&:hover': {
+              backgroundColor: (!textInput && !imageFile) ? 'transparent' : theme.palette.primary.dark,
+            },
+            '&.Mui-disabled': {
+              opacity: 0.5,
+              backgroundColor: 'transparent',
+            }
+          }}
+        >
+          <ArrowUpward sx={{ fontSize: 18 }} />
+        </IconButton>
+
+        <input
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              if (file.size > 5 * 1024 * 1024) {
+                setValidationError('File size must be less than 5MB');
+                return;
+              }
+              setImageFile(file);
+              setValidationError('');
+            }
+          }}
+          id="file-input"
+        />
+      </Paper>
 
       <Collapse in={!!validationError}>
         <Typography 
@@ -289,11 +380,11 @@ const InputSection = ({ onSubmit, loading, imageFile, setImageFile }) => {
 
       <Collapse in={listening}>
         <Typography 
-          variant="caption" 
+          variant="subtitle2" 
           color="primary" 
           sx={{ 
             display: 'block',
-            mt: 1,
+            mt: 0.5,
             ml: 2
           }}
         >

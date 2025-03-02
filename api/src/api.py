@@ -155,33 +155,36 @@ def chatbot_response():
         farmNumber = data.get('farmNum', None)
         chatbot_text = data.get('text', '')
         image = data.get('image', 'NO_IMAGE')
+        chat_history = data.get('chat_history', [])
     else:  # GET request
         farmNumber = request.args.get('farmNum', type=int)
         chatbot_text = request.args.get('text', type=str)
         image = request.args.get('image', default='NO_IMAGE', type=str)
+        chat_history = request.args.get('chat_history', default=[], type=list)
     
     ILLINOIS_FARM_NUMBER = 1
     NORTH_DAKOTA_FARM_NUMBER = 2
-    image_response = client.chat.completions.create(
-        model="gpt-4o-2",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": "Describe this image thoroughly in 5 sentences. Start your response with 'The image I uploaded features'",
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{image}"},
-                    },
-                ],
-            }
-        ],
-    )
-    chatbot_text+= " " + image_response.choices[0].message.content
-
+    if (image != 'NO_IMAGE'):
+        image_response = client.chat.completions.create(
+            model="gpt-4o-2",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Describe this image thoroughly in 5 sentences. Start your response with 'The image I uploaded features'",
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                        },
+                    ],
+                }
+            ],
+        )
+        chatbot_text+= " " + image_response.choices[0].message.content
+    print(chatbot_text)
     farmContext = {}
 
     txt_file_name = ""
@@ -205,7 +208,7 @@ def chatbot_response():
     
     farmContext["historical_weather_and_soil_data"] = content
 
-    chatbot_system_content = "You are an AI chatbot that analyzes the given farm and provided data to suggest optimal tillage dates, methods, and cost comparisons to the farmer, whom you are talking to. Create clear, data-driven insights that empower the farmer to make smart, sustainable tillage decisions for the upcoming planting season. You may only pick from the options available to the farmer and should maximize your use of supplied historical data in reasoning and explaining your decisions. Remember that the current date is " + datetime.today().strftime('%Y-%m-%d')
+    chatbot_system_content = "You are an AI chatbot that analyzes the given farm and provided data to suggest optimal tillage dates, methods, and cost comparisons to the farmer, whom you are talking to. Create clear, data-driven insights that empower the farmer to make smart, sustainable tillage decisions for the upcoming planting season. You may only pick from the options available to the farmer and should maximize your use of supplied historical data in reasoning and explaining your decisions. If the user describes an image in the format 'The image I uploaded features' use that information in your response. Remember that the current date is " + datetime.today().strftime('%Y-%m-%d') + "Remember what I said previously, but also remember that only given them tilling recommendations when they ask for it. This is very important. If the user did not explicitly request any change in the tilling recommendations simply return the old tillage recommendation from the previous chat history exactly word by word. The user might ask to only change one part of the tillage recommendation in that case do exactly that. Keep everything else the same. Remember everything I said before and remember you must is answer their question or respond to their statement from the user text input and give your answer in the response_to_user_question parameter."
     
     if farmContext != {}:
         chatbot_system_content += "Here is the important data about the farm the user owns, including the size of the farm, its planting history, equipment and services available, historical weather and soil data, and location: " + str(farmContext)
@@ -216,17 +219,19 @@ def chatbot_response():
          'text': chatbot_text
         }
     ]
-    if (image != 'NO_IMAGE'):
-        chatbot_user_content.append(
-            {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{image}"},
-            },
-        )
+    chatbot_user_chat_history = [
+        {
+            'type': 'text',
+            'text': "Here is the previous chat history between you and the user: " + str(chat_history)
+        }
+    ]
+    
+    print(chatbot_user_chat_history)
 
     data = {
         "messages": [
             {"role": "system", "content": chatbot_system_content},
+            {"role": "system", "content": chatbot_user_chat_history},
             {"role": "user", "content": chatbot_user_content}
         ]
     }
